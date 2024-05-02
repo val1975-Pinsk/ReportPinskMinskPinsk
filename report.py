@@ -10,7 +10,7 @@ def reWriteTmpFile(content):
 			file.writelines(string + "\n")
 
 def reWriteOtchot(report):
-	rFile = "/home/valentin/Python/otchotTest/otchot.txt"
+	rFile = "/home/valentin/Python/Report/report.txt"
 	with open(rFile, "w") as file:
 		file.write("")
 	with open(rFile, "a") as file:
@@ -18,7 +18,7 @@ def reWriteOtchot(report):
 			file.writelines(string + "\n")
 			
 def getFileContent():
-	myFile = "/home/valentin/Documents/V_19_04.txt"
+	myFile = "/home/valentin/Documents/Водители.txt"
 	with open(myFile, encoding = "utf8") as file:
 		text = file.readlines()
 		return text
@@ -220,24 +220,20 @@ def create(data):
 				report = createBody(report, fullyPrice,  discounted, halfTheCost)
 				return report
 			if "дк" in data[i+1]:
-				print(data[i+1])
 				#    Для наглядности...
 				# data[i] = "Мест 1"
 				# data[i+1] = "+дк 2731*"
 				q = int(data[i].split(" ")[1])
 				discounted[1] += q
 			if "Дк" in data[i+1]:
-				print(data[i+1])
 				q = int(data[i].split(" ")[1])
 				discounted[1] += q
 			if "Д.К." in data[i+1]:
 				q = int(data[i].split(" ")[1])
 				discounted[1] += q
-				print(data[i+1])
 			if "Д к" in data[i+1]:
 				q = int(data[i].split(" ")[1])
 				discounted[1] += q
-				print(data[i+1])
 			if "17р" in data[i+1]:
 				q = int(data[i].split(" ")[1])
 				halfTheCost[1] += q
@@ -256,5 +252,5 @@ fileContent = getFileContent()
 fileContent = get_html(fileContent)
 report = create(fileContent)
 reWriteOtchot(report)
-reWriteTmpFile(fileContent)
+#reWriteTmpFile(fileContent)
 
