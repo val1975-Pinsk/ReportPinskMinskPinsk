@@ -1,5 +1,4 @@
-def getFilList():
-	return
+import os
 
 def reWriteTmpFile(content):
 	tmpFile = "/home/valentin/Python/otchotTest/temp.txt"
@@ -16,9 +15,15 @@ def reWriteOtchot(report):
 	with open(rFile, "a") as file:
 		for string in report:
 			file.writelines(string + "\n")
-			
-def getFileContent():
-	myFile = "/home/valentin/Documents/Водители.txt"
+	
+'''
+	5.05.24
+   Добавлено:
+   	в функцию передаётся название файла, содержание которого содержит
+   	данные для отчёта.
+'''			
+def getFileContent(fName):
+	myFile = "/home/valentin/Documents/" + fName
 	with open(myFile, encoding = "utf8") as file:
 		text = file.readlines()
 		return text
@@ -65,55 +70,6 @@ def get_html(f_c):
 				string = string.replace("<td width=\"25px\">", "Мест ")
 				lst.append(string[:len(string) - 5])
 	return lst
-'''
-    Конец блока.
-'''
-'''
-	Версия функции до 25.04.24
-'''
-'''
-def getHTMLContent(fileContent):
-	lst = []
-	start = False
-	for string in fileContent:
-		if "<body>" in string:
-			start = True
-		if "</body>" in string:
-			start = False
-		if start:
-			string = string.strip()
-			if "colspan=\"5\"" in string:
-				string = string[16:]
-				string = string[:len(string) - 5]
-				lst.append(string)
-	lst_ = []
-	for string in lst:
-		if "Пинск" in string:
-			lst_.append(string)
-		elif "свободно" in string:
-			lst_.append(string)
-		elif "+" in string:
-			lst_.append(string)
-	return lst_
-'''
-'''
-	С 25.04.24 не используется.
-	
-def createReportData(fileC):
-	i = 0
-	report = ["Данные для формирования отчёта"]
-	while i < len(fileC):
-		if "Пинск" in fileC[i]:
-			report.append("\nЗаголовок\n")
-			report.append(fileC[i])
-			i += 1
-			report.append(fileC[i])
-			report.append("\nТело\n")
-		else: report.append(fileC[i])
-		i += 1
-	return report
-'''
-
 def convertDate(date):
 	month = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 	subDate = date.split("-")
@@ -153,29 +109,7 @@ def createBody(report, fullyPrice,  discounted, halfTheCost):
 	report.append(f"Итого на сумму: {totalCash} рублей.")
 	report.append("========================================")
 	return report
-	
-'''
-	Получение кода оплаты:
-		0 - полная стоимось;
-		1 - дисконт;
-		2 - пол стоимости.
-  с 25.04.24 не ипользуется.
-'''
-def getPrice(str_):
-	#print("From getPayCode...")
-	#print("str_: " + str_)
-	i = 0
-	while i < len(str_):
-		if "дк" in str_ or "Дк" in str_:
-	#		print("30p")
-			return 30
-		elif "17р" in str_:
-	#		print("17р")
-			return 17
-		i += 1
-	#print("35p")
-	return 35
-	
+		
 def create(data):
 	i = 0
 	#body = False Версия до 25.04.24
@@ -246,11 +180,18 @@ def create(data):
 		i += 1
 	createBody(report, fullyPrice,  discounted, halfTheCost) #Версия до 25.04.24
 	return report
-fileList = []
-fileList = getFilList()		
-fileContent = getFileContent()
+for root, dirs, files in os.walk("/home/valentin/Documents"):
+	for fileName in files:
+		print(fileName)
+filForReport = input("Файл для отчёта: ")
+fileContent = getFileContent(filForReport)
 fileContent = get_html(fileContent)
 report = create(fileContent)
 reWriteOtchot(report)
+print("Отчёт сохранён в файле report.txt")
+answer = input("Вывести на консоль? (y/n)")
+if answer == "y":
+	for string in report:
+		print(string)
 #reWriteTmpFile(fileContent)
 
