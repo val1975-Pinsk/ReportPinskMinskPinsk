@@ -1,28 +1,99 @@
-def getFilList():
-	return
+class Report:
+	def __init__(self, reportData):
+		self.body = reportData
 
-def reWriteTmpFile(content):
-	tmpFile = "/home/valentin/Python/otchotTest/temp.txt"
-	with open(tmpFile, "w") as file:
-		file.write("")
-	with open(tmpFile, "a") as file:
-		for string in content:
-			file.writelines(string + "\n")
-
-def reWriteOtchot(report):
-	rFile = "/home/valentin/Python/Report/report.txt"
-	with open(rFile, "w") as file:
-		file.write("")
-	with open(rFile, "a") as file:
-		for string in report:
-			file.writelines(string + "\n")
+	def convertDate(self, date):
+		month = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+		subDate = date.split("-")
+		return subDate[2] + " " + month[int(subDate[1]) - 1] + " " + subDate[0]
+	
+	def createHeader(self, string):
+		if "Пинск" in string.string:
+			headerPice = string.spliting(", ")
+			print("Дата отчёта: " + self.convertDate(headerPice[0]))
+			print("Время отправления: " + headerPice[1])
+			print("Направление: " + headerPice[2])
+		if "свободно" in string.string:
+			headerPice = string.spliting(", ")
+			occupied = headerPice[0].split(" ")[0]
+			freely = headerPice[1].split(" ")[0]
+			print("Автомобиль: " + headerPice[2])
+			print("----------------------------------------")
+			print("Занято: " + occupied)
+			print("Свободно: " + freely)
+			print("========================================")
 			
-def getFileContent():
-	myFile = "/home/valentin/Documents/Водители.txt"
+			
+	def create(self):
+		fullyPrice = 0
+		discounted = 0
+		halfTheCost = 0
+		print("ОТЧЁТ" + "\n" + "========================================")
+		i = 0
+		while(i < len(self.body)):
+			if isinstance (self.body[i], ReportStr):
+				if self.body[i].header:
+					fullyPrice = 0
+					discounted = 0
+					halfTheCost = 0
+					self.createHeader(self.body[i])
+				
+			if isinstance (self.body[i], ReportCount):
+				if self.body[i].status:
+					
+			i += 1
+
+class ReportStr:
+	def __init__(self, string, header = False):
+		self.string = string.strip()
+		self.header = header
+	
+	def spliting(self, delimeter):
+		return self.string.split(delimeter)
+		
+	def getDataFromString(self):
+		self.string = self.string[16:len(self.string)-5]
+		
+	def getStringValue(self):
+		return self.string
+	
+class ReportCount:
+	def __init__(self, string):
+		self.count = string.strip()
+		self.status = False	
+		
+	def getStringValue(self):
+		return self.count
+		
+	def getDataFromString(self):	
+		self.count = self.count[17:len(self.count)-5]
+
+
+def getReportData():
+	myFile = "/home/valentin/Report/Водители.txt"
 	with open(myFile, encoding = "utf8") as file:
 		text = file.readlines()
-		return text
-		
+	i = 0
+	data = []
+	count = ""
+	while(i < len(text)):
+		if "Пинск" in text[i]:
+			data.append(ReportStr(text[i], True))
+			data[len(data) - 1].getDataFromString()
+		elif "свободно" in text[i]:
+			data.append(ReportStr(text[i], True))
+			data[len(data) - 1].getDataFromString()
+		elif "width=\"25px\"" in text[i]:
+			data.append(ReportCount(text[i]))
+			data[len(data) - 1].getDataFromString()
+		elif "selected=\"\">Поехал" in text[i]:
+			data[len(data) - 1].status = True
+		elif "td colspan=\"5\"" in text[i]:
+			if not "</tr>" in text[i]:
+				data.append(ReportStr(text[i], True))
+				data[len(data) - 1].getDataFromString()
+		i += 1
+	return data
 '''
 	25.04.24
     Изменения.
@@ -34,90 +105,6 @@ def match(template):
         	if word in template:
         		return True
 	return False
-
-'''
-    Здесь выбираются строки для формирования отчёта.
-'''        
-def get_html(f_c):
-	lst = []
-	getString = False
-	for string in f_c:
-		if "<body>" in string:
-			getString = True
-		if "</body>" in string:
-			getString = False
-		if "BDB9BD" in string:
-			getString = True
-		if "ffcccc" in string:
-			getString = False
-		if "bgcolor=\"white\"" in string:
-			getString = True
-		if "adebeb" in string:
-			getString = False
-		if getString:
-			string = string.strip()
-			if match(string):
-				string = string[16:]
-				string = string[:len(string) - 5]
-				lst.append(string)
-			if "<td width=\"25px\">" in string:
-			#Здесь выбираются строки где обозначено количество мест.
-				string = string.replace("<td width=\"25px\">", "Мест ")
-				lst.append(string[:len(string) - 5])
-	return lst
-'''
-    Конец блока.
-'''
-'''
-	Версия функции до 25.04.24
-'''
-'''
-def getHTMLContent(fileContent):
-	lst = []
-	start = False
-	for string in fileContent:
-		if "<body>" in string:
-			start = True
-		if "</body>" in string:
-			start = False
-		if start:
-			string = string.strip()
-			if "colspan=\"5\"" in string:
-				string = string[16:]
-				string = string[:len(string) - 5]
-				lst.append(string)
-	lst_ = []
-	for string in lst:
-		if "Пинск" in string:
-			lst_.append(string)
-		elif "свободно" in string:
-			lst_.append(string)
-		elif "+" in string:
-			lst_.append(string)
-	return lst_
-'''
-'''
-	С 25.04.24 не используется.
-	
-def createReportData(fileC):
-	i = 0
-	report = ["Данные для формирования отчёта"]
-	while i < len(fileC):
-		if "Пинск" in fileC[i]:
-			report.append("\nЗаголовок\n")
-			report.append(fileC[i])
-			i += 1
-			report.append(fileC[i])
-			report.append("\nТело\n")
-		else: report.append(fileC[i])
-		i += 1
-	return report
-'''
-
-def convertDate(date):
-	month = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-	subDate = date.split("-")
-	return subDate[2] + " " + month[int(subDate[1]) - 1] + " " + subDate[0]
 
 '''
     Функция формирует заголовок отчёта по направлениям, доблавляет в отчёт и
@@ -247,10 +234,8 @@ def create(data):
 	createBody(report, fullyPrice,  discounted, halfTheCost) #Версия до 25.04.24
 	return report
 fileList = []
-fileList = getFilList()		
-fileContent = getFileContent()
-fileContent = get_html(fileContent)
-report = create(fileContent)
-reWriteOtchot(report)
-#reWriteTmpFile(fileContent)
-
+reportData = getReportData()
+for string in reportData:
+	print(string.getStringValue())
+report = Report(reportData)
+report.create()
