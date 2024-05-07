@@ -1,4 +1,4 @@
-import os
+import os, fnmatch
 
 class Payment:
 	def __init__(self, value):
@@ -122,8 +122,8 @@ class ReportCount:
 	def strToInt(self):
 		return int(self.count)
 
-def getReportData():
-	myFile = "/home/valentin/Report/Водители.txt"
+def getReportData(fName):
+	myFile = "/home/valentin/python_dev/report/ReportPinskMinskPinsk/" + fName
 	with open(myFile, encoding = "utf8") as file:
 		text = file.readlines()
 	i = 0
@@ -148,7 +148,13 @@ def getReportData():
 		i += 1
 	return data
 
-fileList = []
-reportData = getReportData()
+listOfFiles = os.listdir(".")
+pattern = "*.txt"
+for entry in listOfFiles:
+	if fnmatch.fnmatch(entry, pattern):
+		print(entry)
+#fileForReport = input("Название файла для отчёта: ")
+reportData = getReportData(input("Название файла для отчёта: "))
 report = Report(reportData)
 report.create()
+
