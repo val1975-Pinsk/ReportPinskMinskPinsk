@@ -1,197 +1,152 @@
-import os
+class Payment:
+	def __init__(self, value):
+		self.value = value
+		self.count = 0
+		
+	def getTotal(self):
+		return self.value * self.count
+		
+	def reset(self):
+		self.count = 0
 
-def reWriteTmpFile(content):
-	tmpFile = "/home/valentin/Python/otchotTest/temp.txt"
-	with open(tmpFile, "w") as file:
-		file.write("")
-	with open(tmpFile, "a") as file:
-		for string in content:
-			file.writelines(string + "\n")
+class Report:
+	def __init__(self, reportData):
+		self.body = reportData
 
-def reWriteOtchot(report):
-	rFile = "/home/valentin/Python/Report/report.txt"
-	with open(rFile, "w") as file:
-		file.write("")
-	with open(rFile, "a") as file:
-		for string in report:
-			file.writelines(string + "\n")
+	def convertDate(self, date):
+		month = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+		subDate = date.split("-")
+		return subDate[2] + " " + month[int(subDate[1]) - 1] + " " + subDate[0]
 	
-'''
-	5.05.24
-   Добавлено:
-   	в функцию передаётся название файла, содержание которого содержит
-   	данные для отчёта.
-'''			
-def getFileContent(fName):
-	myFile = "/home/valentin/Documents/" + fName
+	def createHeader(self, string):
+		if "Пинск" in string.string:
+			headerPice = string.spliting(", ")
+			print("Дата отчёта: " + self.convertDate(headerPice[0]))
+			print("Время отправления: " + headerPice[1])
+			print("Направление: " + headerPice[2])
+		if "свободно" in string.string:
+			headerPice = string.spliting(", ")
+			occupied = headerPice[0].split(" ")[0]
+			freely = headerPice[1].split(" ")[0]
+			print("Автомобиль: " + headerPice[2])
+			print("----------------------------------------")
+			print("Занято: " + occupied)
+			print("Свободно: " + freely)
+			print("----------------------------------------")
+			
+	def createBody(self, discounted, halfTheCost, fullyPrice):
+		print(f"По дисконту: {discounted.count} человек. На сумму: {discounted.getTotal()} руб.")
+		print(f"За полстоимости: {halfTheCost.count} человек. На сумму: {halfTheCost.getTotal()} руб.")
+		print(f"За полную стоимость: {fullyPrice.count} человек. На сумму: {fullyPrice.getTotal()} руб.")
+		print("========================================")
+		
+	def create(self):
+		fullyPrice = Payment(35)
+		discounted = Payment(30)
+		halfTheCost = Payment(17)
+		count = 0
+		print("ОТЧЁТ" + "\n" + "========================================")
+		i = 0
+		while(i < len(self.body)):
+			if isinstance (self.body[i], ReportStr):
+				if self.body[i].header:
+					if fullyPrice.count + discounted.count + halfTheCost.count != 0:
+						self.createBody(discounted, halfTheCost, fullyPrice)
+						fullyPrice.reset()
+						discounted.reset()
+						halfTheCost.reset()
+					self.createHeader(self.body[i])
+				else:
+					if self.body[i].isDiscount() and not self.body[i].isCashless():
+						discounted.count += count
+					elif self.body[i].isHalfTheCost() and not self.body[i].isCashless():
+						halfTheCost.count += count
+					else:
+						if not self.body[i].isCashless():
+							fullyPrice.count += count
+			if isinstance (self.body[i], ReportCount):
+				if self.body[i].status:
+					count = self.body[i].strToInt()
+				else: count = 0
+			i += 1
+		self.createBody(discounted, halfTheCost, fullyPrice)
+			
+class ReportStr:
+	def __init__(self, string, header = False):
+		self.string = string.strip()
+		self.header = header
+	
+	def spliting(self, delimeter):
+		return self.string.split(delimeter)
+		
+	def getDataFromString(self):
+		self.string = self.string[16:len(self.string)-5]
+		
+	def getStringValue(self):
+		return self.string
+	
+	def isHalfTheCost(self):
+		'''words = ["17р"]
+		for word in words:'''
+		if "17р" in self.string:
+			return True
+		return False
+	
+	def isDiscount(self):
+		words = ["дк", "Д.К.", "Д к ", "Дк"]
+		for word in words:
+			if word in self.string:
+				return True
+		return False
+		
+	def isCashless(self):
+		words = ["безнал", "б/н"]
+		for word in words:
+			if word in self.string:
+				return True
+		return False
+		
+class ReportCount:
+	def __init__(self, string):
+		self.count = string.strip()
+		self.status = False	
+		
+	def getStringValue(self):
+		return self.count
+		
+	def getDataFromString(self):	
+		self.count = self.count[17:len(self.count)-5]
+
+	def strToInt(self):
+		return int(self.count)
+
+def getReportData():
+	myFile = "/home/valentin/Report/Водители.txt"
 	with open(myFile, encoding = "utf8") as file:
 		text = file.readlines()
-		return text
-		
-'''
-	25.04.24
-    Изменения.
-    Начало блока.
-'''
-def match(template):
-	words = ["17р", "дк", "Д.К.", "Д к ", "Дк", "свободно", "Пинск"]
-	for word in words:
-        	if word in template:
-        		return True
-	return False
-
-'''
-    Здесь выбираются строки для формирования отчёта.
-'''        
-def get_html(f_c):
-	lst = []
-	getString = False
-	for string in f_c:
-		if "<body>" in string:
-			getString = True
-		if "</body>" in string:
-			getString = False
-		if "BDB9BD" in string:
-			getString = True
-		if "ffcccc" in string:
-			getString = False
-		if "bgcolor=\"white\"" in string:
-			getString = True
-		if "adebeb" in string:
-			getString = False
-		if getString:
-			string = string.strip()
-			if match(string):
-				string = string[16:]
-				string = string[:len(string) - 5]
-				lst.append(string)
-			if "<td width=\"25px\">" in string:
-			#Здесь выбираются строки где обозначено количество мест.
-				string = string.replace("<td width=\"25px\">", "Мест ")
-				lst.append(string[:len(string) - 5])
-	return lst
-def convertDate(date):
-	month = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-	subDate = date.split("-")
-	return subDate[2] + " " + month[int(subDate[1]) - 1] + " " + subDate[0]
-
-'''
-    Функция формирует заголовок отчёта по направлениям, доблавляет в отчёт и
-    возвращет уже обновлённый отчёт.
-'''
-def createHeader(report, headLines):
-	subStr_0 = headLines[0].split(", ")
-	subStr_1 = headLines[1].split(", ")
-	subStr_1_0 = subStr_1[0].split(" ")
-	subStr_1_1 = subStr_1[1].split(" ")	
-	occupied = subStr_1_0[0]		#Занято
-	freely = subStr_1_1[0]			#Свободно
-	report.append("")
-	report.append("Дата отчёта: " + convertDate(subStr_0[0]))
-	report.append("Время отправления: " + subStr_0[1])
-	report.append("Направление: " + subStr_0[2])
-	report.append("Автомобиль: " + subStr_1[2])
-	report.append("----------------------------------------")
-	report.append("Занято: " + occupied)
-	report.append("Свободно: " + freely)
-	report.append("========================================")
-	return report
-
-def createBody(report, fullyPrice,  discounted, halfTheCost):
-	fullyPriceCash = fullyPrice[0] * fullyPrice[1]
-	discountedCash = discounted[0] * discounted[1]
-	halfTheCostCash = halfTheCost[0] * halfTheCost[1]
-	report.append(f"Стоимость: {fullyPrice[0]}p. человек: {fullyPrice[1]} на сумму: {fullyPriceCash} рублей.")
-	report.append(f"Стоимость: {discounted[0]}p. человек: {discounted[1]} на сумму: {discountedCash} рублей.")
-	report.append(f"Стоимость: {halfTheCost[0]}p. человек: {halfTheCost[1]} на сумму: {halfTheCostCash} рублей.")
-	totalCash = fullyPriceCash + discountedCash + halfTheCostCash
-	report.append("----------------------------------------")
-	report.append(f"Итого на сумму: {totalCash} рублей.")
-	report.append("========================================")
-	return report
-		
-def create(data):
 	i = 0
-	#body = False Версия до 25.04.24
-	report = ["ОТЧЁТ", "========================================"]
-	discounted = [30, 0]
-	fullyPrice = [35, 0]
-	halfTheCost = [17, 0]
-	while i < len(data):
-		#if "Заголовок" in data[i]: Версия до 25.04.24
-		if "Пинск" in data[i]:
-			if halfTheCost[1] + discounted[1] + fullyPrice[1] != 0:
-				report = createBody(report, fullyPrice,  discounted, halfTheCost)
-			discounted[1] = 0
-			fullyPrice[1] = 0
-			halfTheCost[1] = 0
-			#body = False Версия до 25.04.24
-			headLines = [data[i], data[i+1]]
-			#i += 1 Версия до 25.04.24
-			'''
-				25.04.24
-			    Правка.
-			Функция не возвращала результат.
-			После правки возвращает. Так понятней действие функции.
-			'''
-			report = createHeader(report, headLines)
-		'''
-		Версия до 25.04.24
-		
-		if "Тело" in data[i]: 
-			body = True
-		if body == True and "Тело" not in data[i]:
-			price = getPrice(data[i])
-			if price == 35:
-				fullyPrice[1] += 1
-			elif price == 30:
-				discounted[1] += 1
-			else: halfTheCost[1] += 1'''
-		if "Мест" in data[i]:
-			if i == len(data)-1:
-				q = int(data[i].split(" ")[1])
-				fullyPrice[1] += 1
-				report = createBody(report, fullyPrice,  discounted, halfTheCost)
-				return report
-			if "дк" in data[i+1]:
-				#    Для наглядности...
-				# data[i] = "Мест 1"
-				# data[i+1] = "+дк 2731*"
-				q = int(data[i].split(" ")[1])
-				discounted[1] += q
-			if "Дк" in data[i+1]:
-				q = int(data[i].split(" ")[1])
-				discounted[1] += q
-			if "Д.К." in data[i+1]:
-				q = int(data[i].split(" ")[1])
-				discounted[1] += q
-			if "Д к" in data[i+1]:
-				q = int(data[i].split(" ")[1])
-				discounted[1] += q
-			if "17р" in data[i+1]:
-				q = int(data[i].split(" ")[1])
-				halfTheCost[1] += q
-			if "Мест" in data[i+1]:
-				q = int(data[i].split(" ")[1])
-				fullyPrice[1] += q
-			if "Пинск" in data[i+1]:
-				q = int(data[i].split(" ")[1])
-				fullyPrice[1] += q
+	data = []
+	count = ""
+	while(i < len(text)):
+		if "Пинск" in text[i]:
+			data.append(ReportStr(text[i], True))
+			data[len(data) - 1].getDataFromString()
+		elif "свободно" in text[i]:
+			data.append(ReportStr(text[i], True))
+			data[len(data) - 1].getDataFromString()
+		elif "width=\"25px\"" in text[i]:
+			data.append(ReportCount(text[i]))
+			data[len(data) - 1].getDataFromString()
+		elif "selected=\"\">Поехал" in text[i]:
+			data[len(data) - 1].status = True
+		elif "td colspan=\"5\"" in text[i]:
+			if not "</tr>" in text[i]:
+				data.append(ReportStr(text[i]))
+				data[len(data) - 1].getDataFromString()
 		i += 1
-	createBody(report, fullyPrice,  discounted, halfTheCost) #Версия до 25.04.24
-	return report
-for root, dirs, files in os.walk("/home/valentin/Documents"):
-	for fileName in files:
-		print(fileName)
-filForReport = input("Файл для отчёта: ")
-fileContent = getFileContent(filForReport)
-fileContent = get_html(fileContent)
-report = create(fileContent)
-reWriteOtchot(report)
-print("Отчёт сохранён в файле report.txt")
-answer = input("Вывести на консоль? (y/n)")
-if answer == "y":
-	for string in report:
-		print(string)
-#reWriteTmpFile(fileContent)
+	return data
 
+fileList = []
+reportData = getReportData()
+report = Report(reportData)
+report.create()
